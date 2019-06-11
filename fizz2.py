@@ -3,7 +3,7 @@
 import json
 import urllib2
 
-domain = 'http://localhost:3004'
+domain = 'http://api.noopschallenge.com'
 
 def print_sep(): print('----------------------------------------------------------------------')
 
@@ -37,19 +37,32 @@ def try_answer(question_url, answer):
         return response
 
 # keep trying answers until a correct one is given
-def get_correct_answer(question_url):
+def get_correct_answer(question_url, ans):
     while True:
-        answer = raw_input('Enter your answer:\n')
-
-        response = try_answer(question_url, answer)
+        response = try_answer(question_url, ans)
 
         if (response.get('result') == 'interview complete'):
             print('congratulations!')
             exit()
 
         if (response.get('result') == 'correct'):
-            raw_input('press enter to continue')
             return response.get('nextQuestion')
+
+def matchRule(p):
+    if p[1]%p[0]['number'] == 0:
+        return p[0]['response']
+    else:
+        return ''
+
+def go(rules, l):
+    ans = []
+    for i in l:
+        res = ''.join(map(matchRule,zip(rules,[i]*len(rules))))
+        if len(res)>0:
+            ans.append(res)
+        else:
+            ans.append(str(i))
+    return ' '.join(ans)
 
 # do the next question
 def do_question(domain, question_url):
@@ -57,17 +70,24 @@ def do_question(domain, question_url):
     print('*** GET %s' % question_url)
 
     question_data = json.load(urllib2.urlopen( ('%s%s' % (domain, question_url)) ))
+    print('*'*20)
+    print(question_data)
+    print('*'*20)
     print_response(question_data)
     print_sep()
 
     next_question = question_data.get('nextQuestion')
 
     if next_question: return next_question
-    return get_correct_answer(question_url)
+    if 'rules' in question_data.keys():
+        return get_correct_answer(question_url, go(question_data['rules'], question_data['numbers']))
+    else:
+        return get_correct_answer(question_url, '{"answer":"COBOL"}')
 
 
 def main():
     question_url = '/fizzbot'
+    question_url = do_question(domain, question_url)
     while question_url:
         question_url = do_question(domain, question_url)
 
