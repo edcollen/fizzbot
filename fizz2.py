@@ -27,8 +27,8 @@ def try_answer(question_url, answer):
         req = urllib2.Request(domain + question_url, body, {'Content-Type': 'application/json'})
         res = urllib2.urlopen(req)
         response = json.load(res)
-        print_response(response)
-        print_sep()
+        if (response.get('result') == 'interview complete'):
+            print_response(response)
         return response
 
     except urllib2.HTTPError as e:
@@ -66,15 +66,7 @@ def go(rules, l):
 
 # do the next question
 def do_question(domain, question_url):
-    print_sep()
-    print('*** GET %s' % question_url)
-
     question_data = json.load(urllib2.urlopen( ('%s%s' % (domain, question_url)) ))
-    print('*'*20)
-    print(question_data)
-    print('*'*20)
-    print_response(question_data)
-    print_sep()
 
     next_question = question_data.get('nextQuestion')
 
@@ -87,7 +79,6 @@ def do_question(domain, question_url):
 
 def main():
     question_url = '/fizzbot'
-    question_url = do_question(domain, question_url)
     while question_url:
         question_url = do_question(domain, question_url)
 
